@@ -1,0 +1,55 @@
+name: Open-webui limbik build
+
+on:
+  push:
+    branches:
+      - limbik
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine Build Vars
+        id: buildvars
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "BUILD_VAR=production" >> "$GITHUB_OUTPUT"
+          elif [[ $GITHUB_REF == refs/heads/limbik ]]; then
+            echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+            echo "BUILD_VAR=staging" >> "$GITHUB_OUTPUT"
+          else
+            echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+            echo "BUILD_VAR=dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: dckr-build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.buildvars.outputs.IMAGE_TAG }}
+          BUILD_VAR: ${{steps.buildvars.outputs.BUILD_VAR}}
+        run: |
+          echo Building for ${BUILD_VAR} Environment
+          DCKR_NAME=other/open-webui
+          docker buildx create --use
+          docker buildx build --cache-from $ECR_REGISTRY/$DCKR_NAME:latest --cache-to type=inline \
+          -t $ECR_REGISTRY/$DCKR_NAME:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$DCKR_NAME:latest \
+          --push \
+          .
