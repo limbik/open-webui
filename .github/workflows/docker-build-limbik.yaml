@@ -49,6 +49,7 @@ jobs:
           DCKR_NAME=other/open-webui
           docker buildx create --use
           docker buildx build --cache-from $ECR_REGISTRY/$DCKR_NAME:latest --cache-to type=inline \
+          --build-arg BUILD_HASH=${{ github.sha }} \
           -t $ECR_REGISTRY/$DCKR_NAME:$IMAGE_TAG \
           -t $ECR_REGISTRY/$DCKR_NAME:latest \
           --push \
