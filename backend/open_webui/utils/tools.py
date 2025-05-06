@@ -97,7 +97,7 @@ def get_tools(
                     elif auth_type == "session":
                         token = request.state.token.credentials
                     elif auth_type == 'oauth':
-                        token = request.cookies.get("oauth_id_token")
+                        token = request.cookies.get("oauth_access_token")
 
                     def make_tool_function(function_name, token, tool_server_data):
                         async def tool_function(**kwargs):
