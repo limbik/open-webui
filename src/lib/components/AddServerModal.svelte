@@ -256,6 +256,7 @@
 										>
 											<option value="bearer">Bearer</option>
 											<option value="session">Session</option>
+											<option value="oauth">OAuth</option>
 										</select>
 									</div>
 
@@ -270,6 +271,10 @@
 										{:else if auth_type === 'session'}
 											<div class="text-xs text-gray-500 self-center translate-y-[1px]">
 												{$i18n.t('Forwards system user session credentials to authenticate')}
+											</div>
+										{:else if auth_type === 'oauth'}
+											<div class="text-xs text-gray-500 self-center translate-y-[1px]">
+												{$i18n.t('OAuth authentication will be handled via external provider')}
 											</div>
 										{/if}
 									</div>
